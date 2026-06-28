@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+# Pre-commit hook: runs formatting checks before a commit is finalized.
+# Install: cp .claude/hooks/pre-commit .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit
+
+set -euo pipefail
+
+STAGED=$(git diff --cached --name-only --diff-filter=ACM)
+
+if [ -z "$STAGED" ]; then
+  exit 0
+fi
+
+echo "==> Running pre-commit checks..."
+
+# --- Prettier (JS / CSS / SCSS / HTML / Markdown / YAML) ---
+PRETTIER_FILES=$(echo "$STAGED" | grep -E '\.(js|css|scss|html|md|yml|yaml)$' || true)
+if [ -n "$PRETTIER_FILES" ] && command -v prettier &>/dev/null; then
+  echo "    prettier --check ..."
+  echo "$PRETTIER_FILES" | xargs prettier --check --loglevel warn
+fi
+
+# --- Rubocop (Ruby files) ---
+RUBY_FILES=$(echo "$STAGED" | grep -E '\.rb$' || true)
+if [ -n "$RUBY_FILES" ] && command -v rubocop &>/dev/null; then
+  echo "    rubocop ..."
+  echo "$RUBY_FILES" | xargs bundle exec rubocop --format quiet
+fi
+
+# --- Jekyll build smoke-check (only if _config or layout/post files changed) ---
+JEKYLL_TRIGGER=$(echo "$STAGED" | grep -E '(_config\.yml|_layouts/|_includes/|_posts/)' || true)
+if [ -n "$JEKYLL_TRIGGER" ]; then
+  echo "    jekyll build (smoke check) ..."
+  bundle exec jekyll build --quiet 2>&1 | tail -5
+fi
+
+echo "==> Pre-commit checks passed."

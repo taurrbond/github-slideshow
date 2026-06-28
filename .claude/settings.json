@@ -1,0 +1,49 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(**)",
+      "Edit(**/*.html)",
+      "Edit(**/*.md)",
+      "Edit(**/*.yml)",
+      "Edit(**/*.yaml)",
+      "Edit(**/*.rb)",
+      "Edit(**/*.js)",
+      "Edit(**/*.css)",
+      "Edit(**/*.scss)",
+      "Edit(**/*.liquid)",
+      "Bash(bundle exec jekyll build)",
+      "Bash(bundle exec jekyll serve*)",
+      "Bash(bundle exec htmlproofer*)",
+      "Bash(bundle exec rspec*)",
+      "Bash(bundle exec rubocop*)",
+      "Bash(bundle install*)",
+      "Bash(npm test)",
+      "Bash(npm run lint)",
+      "Bash(npm run format)",
+      "Bash(prettier --write *)",
+      "Bash(git status)",
+      "Bash(git diff*)",
+      "Bash(git log*)",
+      "Bash(git add *)",
+      "Bash(git commit*)",
+      "Bash(git push*)",
+      "Bash(git fetch*)",
+      "Bash(git checkout *)",
+      "Bash(git branch*)"
+    ],
+    "deny": [
+      "Bash(curl*)",
+      "Bash(wget*)",
+      "Bash(rm -rf*)",
+      "Bash(rm -r /*)",
+      "Bash(sudo *)",
+      "Bash(chmod 777*)",
+      "Bash(dd *)",
+      "Bash(mkfs*)",
+      "Edit(.env)",
+      "Edit(.env.*)",
+      "Edit(**/.env)",
+      "Edit(**/.env.*)"
+    ]
+  }
+}
