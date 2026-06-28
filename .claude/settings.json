@@ -11,5 +11,18 @@
       "command": "npx",
       "args": ["-y", "@upstash/context7-mcp"]
     }
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/pre-write.sh"
+          }
+        ]
+      }
+    ]
   }
 }
