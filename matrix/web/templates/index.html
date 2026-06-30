@@ -1,0 +1,511 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Matrix Data Dashboard</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body { background: #0f1117; color: #e2e8f0; }
+    .card { background: #1a1d27; border: 1px solid #2d3748; border-radius: 12px; }
+    .card-header { background: #252836; border-bottom: 1px solid #2d3748; font-weight: 600; }
+    .stat-card { border-left: 4px solid; }
+    .stat-clients  { border-color: #4f86f7; }
+    .stat-projects { border-color: #48bb78; }
+    .stat-tasks    { border-color: #ed8936; }
+    .stat-revenue  { border-color: #38b2ac; }
+    .stat-profit   { border-color: #9f7aea; }
+    .stat-overdue  { border-color: #fc8181; }
+    .stat-num { font-size: 1.8rem; font-weight: 700; }
+    .nav-tabs .nav-link { color: #a0aec0; border: none; padding: .6rem 1.2rem; }
+    .nav-tabs .nav-link.active { color: #fff; background: #252836; border-radius: 8px 8px 0 0; }
+    .tab-content { background: #1a1d27; border: 1px solid #2d3748; border-top: none;
+                   border-radius: 0 8px 8px 8px; padding: 1rem; }
+    table { color: #e2e8f0; }
+    table thead th { color: #a0aec0; font-size: .8rem; text-transform: uppercase; letter-spacing: .05em; }
+    table tbody tr:hover { background: #252836; }
+    .badge-todo       { background: #4a5568; }
+    .badge-in_progress{ background: #2b6cb0; }
+    .badge-review     { background: #744210; }
+    .badge-done       { background: #276749; }
+    .badge-cancelled  { background: #742a2a; }
+    .badge-critical   { background: #9b2c2c; }
+    .badge-high       { background: #c05621; }
+    .badge-medium     { background: #2c5282; }
+    .badge-low        { background: #276749; }
+    .modal-content { background: #1a1d27; color: #e2e8f0; border: 1px solid #2d3748; }
+    .modal-header  { border-bottom: 1px solid #2d3748; }
+    .modal-footer  { border-top: 1px solid #2d3748; }
+    .form-control, .form-select {
+      background: #0f1117; color: #e2e8f0; border: 1px solid #2d3748;
+    }
+    .form-control:focus, .form-select:focus {
+      background: #0f1117; color: #fff; border-color: #4f86f7; box-shadow: none;
+    }
+    .btn-primary { background: #4f86f7; border-color: #4f86f7; }
+    .toolbar { display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; }
+  </style>
+</head>
+<body>
+
+<nav class="navbar navbar-dark px-4 py-2" style="background:#0b0d14; border-bottom:1px solid #2d3748">
+  <span class="navbar-brand fw-bold fs-5">⬡ Matrix Data</span>
+  <div class="d-flex gap-2">
+    <button class="btn btn-sm btn-outline-secondary" onclick="exportExcel()">↓ Excel</button>
+    <a href="/api/export/csv/clients" class="btn btn-sm btn-outline-secondary">↓ CSV</a>
+  </div>
+</nav>
+
+<div class="container-fluid py-4 px-4">
+
+  <!-- Summary cards -->
+  <div id="summary-row" class="row g-3 mb-4"></div>
+
+  <!-- Tabs -->
+  <ul class="nav nav-tabs" id="mainTabs">
+    <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-clients">Клиенты</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-projects">Проекты</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-tasks">Задачи</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-transactions">Транзакции</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-contacts">Контакты</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-analytics">Аналитика</button></li>
+  </ul>
+
+  <div class="tab-content" id="mainTabContent">
+
+    <!-- Clients -->
+    <div class="tab-pane fade show active" id="tab-clients">
+      <div class="toolbar mb-3">
+        <input class="form-control form-control-sm w-auto" id="client-search" placeholder="Поиск...">
+        <select class="form-select form-select-sm w-auto" id="client-status">
+          <option value="">Все статусы</option>
+          <option value="active">Active</option>
+          <option value="inactive">Inactive</option>
+          <option value="prospect">Prospect</option>
+        </select>
+        <button class="btn btn-sm btn-primary ms-auto" onclick="openModal('client')">+ Добавить</button>
+      </div>
+      <div id="clients-table"></div>
+    </div>
+
+    <!-- Projects -->
+    <div class="tab-pane fade" id="tab-projects">
+      <div class="toolbar mb-3">
+        <input class="form-control form-control-sm w-auto" id="project-search" placeholder="Поиск...">
+        <select class="form-select form-select-sm w-auto" id="project-status">
+          <option value="">Все статусы</option>
+          <option value="active">Active</option>
+          <option value="completed">Completed</option>
+          <option value="paused">Paused</option>
+          <option value="cancelled">Cancelled</option>
+        </select>
+        <button class="btn btn-sm btn-primary ms-auto" onclick="openModal('project')">+ Добавить</button>
+      </div>
+      <div id="projects-table"></div>
+    </div>
+
+    <!-- Tasks -->
+    <div class="tab-pane fade" id="tab-tasks">
+      <div class="toolbar mb-3">
+        <select class="form-select form-select-sm w-auto" id="task-status">
+          <option value="">Все статусы</option>
+          <option value="todo">Todo</option>
+          <option value="in_progress">In Progress</option>
+          <option value="review">Review</option>
+          <option value="done">Done</option>
+          <option value="cancelled">Cancelled</option>
+        </select>
+        <select class="form-select form-select-sm w-auto" id="task-priority">
+          <option value="">Все приоритеты</option>
+          <option value="critical">Critical</option>
+          <option value="high">High</option>
+          <option value="medium">Medium</option>
+          <option value="low">Low</option>
+        </select>
+        <label class="form-check-label ms-2">
+          <input class="form-check-input" type="checkbox" id="task-overdue"> Просроченные
+        </label>
+        <button class="btn btn-sm btn-primary ms-auto" onclick="openModal('task')">+ Добавить</button>
+      </div>
+      <div id="tasks-table"></div>
+    </div>
+
+    <!-- Transactions -->
+    <div class="tab-pane fade" id="tab-transactions">
+      <div class="toolbar mb-3">
+        <select class="form-select form-select-sm w-auto" id="tx-type">
+          <option value="">Все типы</option>
+          <option value="income">Income</option>
+          <option value="expense">Expense</option>
+        </select>
+        <input class="form-control form-control-sm w-auto" id="tx-from" type="date" title="От">
+        <input class="form-control form-control-sm w-auto" id="tx-to"   type="date" title="До">
+        <button class="btn btn-sm btn-primary ms-auto" onclick="openModal('transaction')">+ Добавить</button>
+      </div>
+      <div id="transactions-table"></div>
+    </div>
+
+    <!-- Contacts -->
+    <div class="tab-pane fade" id="tab-contacts">
+      <div class="toolbar mb-3">
+        <input class="form-control form-control-sm w-auto" id="contact-search" placeholder="Поиск...">
+        <button class="btn btn-sm btn-primary ms-auto" onclick="openModal('contact')">+ Добавить</button>
+      </div>
+      <div id="contacts-table"></div>
+    </div>
+
+    <!-- Analytics -->
+    <div class="tab-pane fade" id="tab-analytics">
+      <div class="row g-3 mt-1">
+        <div class="col-md-6">
+          <div class="card"><div class="card-header">Выручка по клиентам</div>
+            <div class="card-body p-0"><div id="revenue-table"></div></div></div>
+        </div>
+        <div class="col-md-6">
+          <div class="card"><div class="card-header">Денежный поток по месяцам</div>
+            <div class="card-body p-0"><div id="cashflow-table"></div></div></div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- tab-content -->
+</div><!-- container -->
+
+<!-- Modal -->
+<div class="modal fade" id="entityModal" tabindex="-1">
+  <div class="modal-dialog"><div class="modal-content">
+    <div class="modal-header">
+      <h5 class="modal-title" id="modalTitle">Добавить</h5>
+      <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+      <button type="button" class="btn btn-primary" id="modalSave">Сохранить</button>
+    </div>
+  </div></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+const modal = new bootstrap.Modal(document.getElementById('entityModal'));
+let modalSaveCallback = null;
+
+// ── API helpers ───────────────────────────────────────────────────────────────
+
+async function api(method, path, body) {
+  const opts = { method, headers: { 'Content-Type': 'application/json' } };
+  if (body) opts.body = JSON.stringify(body);
+  const r = await fetch(path, opts);
+  return r.json();
+}
+
+// ── Render helpers ────────────────────────────────────────────────────────────
+
+function badge(cls, text) {
+  return `<span class="badge badge-${text} rounded-pill">${text}</span>`;
+}
+
+function table(rows, cols, actions) {
+  if (!rows.length) return '<p class="text-muted p-3">Нет данных</p>';
+  const head = cols.map(c => `<th>${c.label}</th>`).join('');
+  const body = rows.map(r => {
+    const cells = cols.map(c => {
+      let v = r[c.key] ?? '';
+      if (c.badge) v = badge(c.key, v);
+      if (c.money) v = v ? `$${Number(v).toLocaleString('ru')}` : '';
+      return `<td>${v}</td>`;
+    }).join('');
+    const acts = (actions || []).map(a =>
+      `<button class="btn btn-sm btn-link p-0 me-2 text-${a.color||'primary'}"
+        onclick="${a.fn}(${r.id})">${a.label}</button>`
+    ).join('');
+    return `<tr>${cells}<td>${acts}</td></tr>`;
+  }).join('');
+  return `<table class="table table-sm table-hover mb-0">
+    <thead><tr>${head}<th></th></tr></thead><tbody>${body}</tbody></table>`;
+}
+
+// ── Summary ───────────────────────────────────────────────────────────────────
+
+async function loadSummary() {
+  const s = await api('GET', '/api/summary');
+  const profit = s.revenue - s.expenses;
+  document.getElementById('summary-row').innerHTML = [
+    {cls:'stat-clients',  label:'Клиенты',  val: s.clients},
+    {cls:'stat-projects', label:'Проекты',  val: s.projects},
+    {cls:'stat-tasks',    label:'Задачи',   val: s.tasks},
+    {cls:'stat-revenue',  label:'Выручка',  val: `$${s.revenue.toLocaleString('ru')}`},
+    {cls:'stat-profit',   label:'Прибыль',  val: `$${profit.toLocaleString('ru')}`},
+    {cls:'stat-overdue',  label:'Просрочено', val: s.overdue_tasks},
+  ].map(c => `
+    <div class="col-sm-6 col-md-4 col-lg-2">
+      <div class="card stat-card ${c.cls} p-3">
+        <div class="text-muted small">${c.label}</div>
+        <div class="stat-num">${c.val}</div>
+      </div>
+    </div>`).join('');
+}
+
+// ── Clients ───────────────────────────────────────────────────────────────────
+
+async function loadClients() {
+  const status = document.getElementById('client-status').value;
+  const search = document.getElementById('client-search').value;
+  const rows = await api('GET', `/api/clients?status=${status}&search=${search}`);
+  document.getElementById('clients-table').innerHTML = table(rows, [
+    {key:'id',label:'ID'},{key:'name',label:'Имя'},{key:'email',label:'Email'},
+    {key:'phone',label:'Телефон'},{key:'status',label:'Статус',badge:true},
+    {key:'created_at',label:'Создан'},
+  ], [{label:'✕',fn:'deleteClient',color:'danger'}]);
+}
+
+async function deleteClient(id) {
+  if (!confirm('Удалить клиента?')) return;
+  await api('DELETE', `/api/clients/${id}`);
+  loadClients(); loadSummary();
+}
+
+document.getElementById('client-search').addEventListener('input', loadClients);
+document.getElementById('client-status').addEventListener('change', loadClients);
+
+// ── Projects ──────────────────────────────────────────────────────────────────
+
+async function loadProjects() {
+  const status = document.getElementById('project-status').value;
+  const search = document.getElementById('project-search').value;
+  const rows = await api('GET', `/api/projects?status=${status}&search=${search}`);
+  document.getElementById('projects-table').innerHTML = table(rows, [
+    {key:'id',label:'ID'},{key:'client_name',label:'Клиент'},{key:'name',label:'Название'},
+    {key:'status',label:'Статус',badge:true},{key:'budget',label:'Бюджет',money:true},
+    {key:'start_date',label:'Начало'},{key:'end_date',label:'Конец'},
+  ], [{label:'✕',fn:'deleteProject',color:'danger'}]);
+}
+
+async function deleteProject(id) {
+  if (!confirm('Удалить проект?')) return;
+  await api('DELETE', `/api/projects/${id}`);
+  loadProjects(); loadSummary();
+}
+
+document.getElementById('project-search').addEventListener('input', loadProjects);
+document.getElementById('project-status').addEventListener('change', loadProjects);
+
+// ── Tasks ─────────────────────────────────────────────────────────────────────
+
+async function loadTasks() {
+  const status   = document.getElementById('task-status').value;
+  const priority = document.getElementById('task-priority').value;
+  const overdue  = document.getElementById('task-overdue').checked;
+  const rows = await api('GET', `/api/tasks?status=${status}&priority=${priority}&overdue=${overdue}`);
+  document.getElementById('tasks-table').innerHTML = table(rows, [
+    {key:'id',label:'ID'},{key:'project_name',label:'Проект'},{key:'title',label:'Задача'},
+    {key:'assignee',label:'Исполнитель'},{key:'status',label:'Статус',badge:true},
+    {key:'priority',label:'Приоритет',badge:true},{key:'due_date',label:'Срок'},
+  ], [
+    {label:'✓',fn:'doneTask',color:'success'},
+    {label:'✕',fn:'deleteTask',color:'danger'},
+  ]);
+}
+
+async function doneTask(id) {
+  await api('PUT', `/api/tasks/${id}`, {status:'done'});
+  loadTasks(); loadSummary();
+}
+async function deleteTask(id) {
+  if (!confirm('Удалить задачу?')) return;
+  await api('DELETE', `/api/tasks/${id}`);
+  loadTasks(); loadSummary();
+}
+
+['task-status','task-priority'].forEach(id =>
+  document.getElementById(id).addEventListener('change', loadTasks));
+document.getElementById('task-overdue').addEventListener('change', loadTasks);
+
+// ── Transactions ──────────────────────────────────────────────────────────────
+
+async function loadTransactions() {
+  const type = document.getElementById('tx-type').value;
+  const from = document.getElementById('tx-from').value;
+  const to   = document.getElementById('tx-to').value;
+  const rows = await api('GET', `/api/transactions?type=${type}&from=${from}&to=${to}`);
+  document.getElementById('transactions-table').innerHTML = table(rows, [
+    {key:'id',label:'ID'},{key:'project_name',label:'Проект'},
+    {key:'type',label:'Тип',badge:true},{key:'amount',label:'Сумма',money:true},
+    {key:'currency',label:'Валюта'},{key:'category',label:'Категория'},
+    {key:'date',label:'Дата'},{key:'description',label:'Описание'},
+  ], [{label:'✕',fn:'deleteTx',color:'danger'}]);
+}
+
+async function deleteTx(id) {
+  if (!confirm('Удалить транзакцию?')) return;
+  await api('DELETE', `/api/transactions/${id}`);
+  loadTransactions(); loadSummary();
+}
+
+['tx-type','tx-from','tx-to'].forEach(id =>
+  document.getElementById(id).addEventListener('change', loadTransactions));
+
+// ── Contacts ──────────────────────────────────────────────────────────────────
+
+async function loadContacts() {
+  const search = document.getElementById('contact-search').value;
+  const rows = await api('GET', `/api/contacts?search=${search}`);
+  document.getElementById('contacts-table').innerHTML = table(rows, [
+    {key:'id',label:'ID'},{key:'client_name',label:'Клиент'},{key:'name',label:'Имя'},
+    {key:'role',label:'Роль'},{key:'email',label:'Email'},{key:'phone',label:'Телефон'},
+  ], [{label:'✕',fn:'deleteContact',color:'danger'}]);
+}
+
+async function deleteContact(id) {
+  if (!confirm('Удалить контакт?')) return;
+  await api('DELETE', `/api/contacts/${id}`);
+  loadContacts(); loadSummary();
+}
+
+document.getElementById('contact-search').addEventListener('input', loadContacts);
+
+// ── Analytics ─────────────────────────────────────────────────────────────────
+
+async function loadAnalytics() {
+  const [rev, cf] = await Promise.all([
+    api('GET', '/api/analytics/revenue'),
+    api('GET', '/api/analytics/cashflow'),
+  ]);
+  document.getElementById('revenue-table').innerHTML = table(rev, [
+    {key:'client',label:'Клиент'},{key:'projects',label:'Проектов'},
+    {key:'revenue',label:'Выручка',money:true},{key:'expenses',label:'Расходы',money:true},
+  ], []);
+  document.getElementById('cashflow-table').innerHTML = table(cf, [
+    {key:'month',label:'Месяц'},{key:'revenue',label:'Доход',money:true},
+    {key:'expenses',label:'Расход',money:true},{key:'net',label:'Нетто',money:true},
+  ], []);
+}
+
+// ── Modals ────────────────────────────────────────────────────────────────────
+
+const FORMS = {
+  client: {
+    title: 'Добавить клиента',
+    fields: [
+      {name:'name',label:'Имя *',type:'text',required:true},
+      {name:'email',label:'Email',type:'email'},
+      {name:'phone',label:'Телефон',type:'text'},
+      {name:'status',label:'Статус',type:'select',opts:['active','inactive','prospect']},
+      {name:'notes',label:'Заметки',type:'textarea'},
+    ],
+    endpoint: '/api/clients',
+    reload: () => { loadClients(); loadSummary(); },
+  },
+  project: {
+    title: 'Добавить проект',
+    fields: [
+      {name:'client_id',label:'ID клиента *',type:'number',required:true},
+      {name:'name',label:'Название *',type:'text',required:true},
+      {name:'description',label:'Описание',type:'textarea'},
+      {name:'status',label:'Статус',type:'select',opts:['active','completed','paused','cancelled']},
+      {name:'budget',label:'Бюджет',type:'number'},
+      {name:'start_date',label:'Начало',type:'date'},
+      {name:'end_date',label:'Конец',type:'date'},
+    ],
+    endpoint: '/api/projects',
+    reload: () => { loadProjects(); loadSummary(); },
+  },
+  task: {
+    title: 'Добавить задачу',
+    fields: [
+      {name:'project_id',label:'ID проекта *',type:'number',required:true},
+      {name:'title',label:'Заголовок *',type:'text',required:true},
+      {name:'assignee',label:'Исполнитель',type:'text'},
+      {name:'status',label:'Статус',type:'select',opts:['todo','in_progress','review','done','cancelled']},
+      {name:'priority',label:'Приоритет',type:'select',opts:['low','medium','high','critical']},
+      {name:'due_date',label:'Срок',type:'date'},
+      {name:'description',label:'Описание',type:'textarea'},
+    ],
+    endpoint: '/api/tasks',
+    reload: () => { loadTasks(); loadSummary(); },
+  },
+  transaction: {
+    title: 'Добавить транзакцию',
+    fields: [
+      {name:'project_id',label:'ID проекта *',type:'number',required:true},
+      {name:'amount',label:'Сумма *',type:'number',required:true},
+      {name:'type',label:'Тип',type:'select',opts:['income','expense']},
+      {name:'category',label:'Категория',type:'text'},
+      {name:'currency',label:'Валюта',type:'text',placeholder:'USD'},
+      {name:'date',label:'Дата',type:'date'},
+      {name:'description',label:'Описание',type:'textarea'},
+    ],
+    endpoint: '/api/transactions',
+    reload: () => { loadTransactions(); loadSummary(); },
+  },
+  contact: {
+    title: 'Добавить контакт',
+    fields: [
+      {name:'client_id',label:'ID клиента *',type:'number',required:true},
+      {name:'name',label:'Имя *',type:'text',required:true},
+      {name:'role',label:'Роль',type:'text'},
+      {name:'email',label:'Email',type:'email'},
+      {name:'phone',label:'Телефон',type:'text'},
+      {name:'notes',label:'Заметки',type:'textarea'},
+    ],
+    endpoint: '/api/contacts',
+    reload: () => { loadContacts(); loadSummary(); },
+  },
+};
+
+function openModal(type) {
+  const cfg = FORMS[type];
+  document.getElementById('modalTitle').textContent = cfg.title;
+  document.getElementById('modalBody').innerHTML = cfg.fields.map(f => {
+    const req = f.required ? 'required' : '';
+    if (f.type === 'select')
+      return `<div class="mb-2"><label class="form-label small">${f.label}</label>
+        <select class="form-select form-select-sm" name="${f.name}" ${req}>
+          ${f.opts.map(o=>`<option value="${o}">${o}</option>`).join('')}
+        </select></div>`;
+    if (f.type === 'textarea')
+      return `<div class="mb-2"><label class="form-label small">${f.label}</label>
+        <textarea class="form-control form-control-sm" name="${f.name}" rows="2"></textarea></div>`;
+    return `<div class="mb-2"><label class="form-label small">${f.label}</label>
+      <input class="form-control form-control-sm" type="${f.type}" name="${f.name}"
+        placeholder="${f.placeholder||''}" ${req}></div>`;
+  }).join('');
+
+  modalSaveCallback = async () => {
+    const form = document.getElementById('modalBody');
+    const data = {};
+    form.querySelectorAll('[name]').forEach(el => {
+      if (el.value) data[el.name] = el.type === 'number' ? Number(el.value) : el.value;
+    });
+    const res = await api('POST', cfg.endpoint, data);
+    if (res.id) { modal.hide(); cfg.reload(); }
+    else alert(JSON.stringify(res));
+  };
+  modal.show();
+}
+
+document.getElementById('modalSave').addEventListener('click', () => modalSaveCallback?.());
+
+// ── Export ────────────────────────────────────────────────────────────────────
+
+async function exportExcel() {
+  window.location = '/api/export/excel';
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+
+document.getElementById('mainTabs').addEventListener('shown.bs.tab', e => {
+  const target = e.target.getAttribute('data-bs-target');
+  if (target === '#tab-analytics') loadAnalytics();
+});
+
+loadSummary();
+loadClients();
+loadProjects();
+loadTasks();
+loadTransactions();
+loadContacts();
+</script>
+</body>
+</html>

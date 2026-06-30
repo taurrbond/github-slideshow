@@ -1,0 +1,74 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Matrix Data Schema",
+  "description": "JSON Schema for validating Matrix entities before DB insert",
+  "definitions": {
+    "client": {
+      "type": "object",
+      "required": ["name"],
+      "properties": {
+        "name":   { "type": "string", "minLength": 1, "maxLength": 255 },
+        "email":  { "type": ["string", "null"], "format": "email" },
+        "phone":  { "type": ["string", "null"] },
+        "status": { "type": "string", "enum": ["active", "inactive", "prospect"] },
+        "notes":  { "type": ["string", "null"] }
+      },
+      "additionalProperties": false
+    },
+    "project": {
+      "type": "object",
+      "required": ["client_id", "name"],
+      "properties": {
+        "client_id":   { "type": "integer", "minimum": 1 },
+        "name":        { "type": "string", "minLength": 1, "maxLength": 255 },
+        "description": { "type": ["string", "null"] },
+        "status":      { "type": "string", "enum": ["active", "completed", "paused", "cancelled"] },
+        "budget":      { "type": ["number", "null"], "minimum": 0 },
+        "start_date":  { "type": ["string", "null"], "pattern": "^\\d{4}-\\d{2}-\\d{2}$" },
+        "end_date":    { "type": ["string", "null"], "pattern": "^\\d{4}-\\d{2}-\\d{2}$" }
+      },
+      "additionalProperties": false
+    },
+    "task": {
+      "type": "object",
+      "required": ["project_id", "title"],
+      "properties": {
+        "project_id":  { "type": "integer", "minimum": 1 },
+        "title":       { "type": "string", "minLength": 1, "maxLength": 500 },
+        "description": { "type": ["string", "null"] },
+        "assignee":    { "type": ["string", "null"] },
+        "status":      { "type": "string", "enum": ["todo", "in_progress", "review", "done", "cancelled"] },
+        "priority":    { "type": "string", "enum": ["low", "medium", "high", "critical"] },
+        "due_date":    { "type": ["string", "null"], "pattern": "^\\d{4}-\\d{2}-\\d{2}$" }
+      },
+      "additionalProperties": false
+    },
+    "transaction": {
+      "type": "object",
+      "required": ["project_id", "amount"],
+      "properties": {
+        "project_id":  { "type": "integer", "minimum": 1 },
+        "amount":      { "type": "number", "exclusiveMinimum": 0 },
+        "type":        { "type": "string", "enum": ["income", "expense"] },
+        "category":    { "type": ["string", "null"] },
+        "description": { "type": ["string", "null"] },
+        "currency":    { "type": "string", "minLength": 3, "maxLength": 3 },
+        "date":        { "type": ["string", "null"], "pattern": "^\\d{4}-\\d{2}-\\d{2}$" }
+      },
+      "additionalProperties": false
+    },
+    "contact": {
+      "type": "object",
+      "required": ["client_id", "name"],
+      "properties": {
+        "client_id": { "type": "integer", "minimum": 1 },
+        "name":      { "type": "string", "minLength": 1 },
+        "role":      { "type": ["string", "null"] },
+        "email":     { "type": ["string", "null"] },
+        "phone":     { "type": ["string", "null"] },
+        "notes":     { "type": ["string", "null"] }
+      },
+      "additionalProperties": false
+    }
+  }
+}
