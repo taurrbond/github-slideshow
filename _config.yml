@@ -101,16 +101,24 @@ reveal:
   minScale: 0.2
   maxScale: 1.5
 
+## Files kept in the repo (so GitHub Pages can serve reveal.js without an
+## npm install) but never referenced by the slideshow, so we keep them out of
+## the built _site to shrink each deploy. reveal.js now lives under
+## node_modules/reveal.js — the old "reveal.js/*" entries no longer matched
+## anything, so these paths had to be repointed for the excludes to take effect.
 exclude: [
   "Gemfile",
   "Gemfile.lock",
   "vendor",
-  "reveal.js/test",
-  "reveal.js/index.html",
-  "reveal.js/README.md",
-  "reveal.js/bower.json",
-  "reveal.js/Gruntfile.js",
-  "reveal.js/CONTRIBUTING.md",
-  "reveal.js/LICENSE",
-  "reveal.js/package.json"
+  "package-lock.json",
+  "node_modules/reveal.js/test",
+  "node_modules/reveal.js/css/theme/source",
+  "node_modules/reveal.js/index.html",
+  "node_modules/reveal.js/demo.html",
+  "node_modules/reveal.js/README.md",
+  "node_modules/reveal.js/bower.json",
+  "node_modules/reveal.js/Gruntfile.js",
+  "node_modules/reveal.js/CONTRIBUTING.md",
+  "node_modules/reveal.js/LICENSE",
+  "node_modules/reveal.js/package.json"
 ]
