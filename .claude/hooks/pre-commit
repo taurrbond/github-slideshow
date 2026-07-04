@@ -1,8 +1,17 @@
 #!/usr/bin/env bash
 # Pre-commit hook: runs formatting checks before a commit is finalized.
-# Install: cp .claude/hooks/pre-commit .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit
+# Activated via `git config core.hooksPath .claude/hooks` (done by SessionStart hook).
 
 set -euo pipefail
+
+# Some environments have the gem but no binstub on PATH.
+jekyll_run() {
+  if bundle exec jekyll --version &>/dev/null; then
+    bundle exec jekyll "$@"
+  else
+    bundle exec ruby "$(bundle info jekyll --path)/exe/jekyll" "$@"
+  fi
+}
 
 STAGED=$(git diff --cached --name-only --diff-filter=ACM)
 
@@ -16,7 +25,7 @@ echo "==> Running pre-commit checks..."
 PRETTIER_FILES=$(echo "$STAGED" | grep -E '\.(js|css|scss|html|md|yml|yaml)$' || true)
 if [ -n "$PRETTIER_FILES" ] && command -v prettier &>/dev/null; then
   echo "    prettier --check ..."
-  echo "$PRETTIER_FILES" | xargs prettier --check --loglevel warn
+  echo "$PRETTIER_FILES" | xargs prettier --check --log-level warn
 fi
 
 # --- Rubocop (Ruby files) ---
@@ -30,7 +39,7 @@ fi
 JEKYLL_TRIGGER=$(echo "$STAGED" | grep -E '(_config\.yml|_layouts/|_includes/|_posts/)' || true)
 if [ -n "$JEKYLL_TRIGGER" ]; then
   echo "    jekyll build (smoke check) ..."
-  bundle exec jekyll build --quiet 2>&1 | tail -5
+  jekyll_run build --quiet 2>&1 | tail -5
 fi
 
 echo "==> Pre-commit checks passed."

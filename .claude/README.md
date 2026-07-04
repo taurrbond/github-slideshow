@@ -13,13 +13,20 @@ repository. Below is what each piece does and how they wire together.
 ├── CLAUDE.local.md      — personal overrides (gitignored)
 ├── commands/
 │   ├── init.md          — /init        regenerate CLAUDE.md
-│   └── code-review.md   — /code-review run the code-review skill on the diff
+│   ├── code-review.md   — /code-review run the code-review skill on the diff
+│   └── add-slide.md     — /add-slide   create a new slide in _posts/
 ├── skills/
-│   └── code-review/
-│       └── SKILL.md     — checklist + output format for reviews
+│   ├── code-review/
+│   │   └── SKILL.md     — checklist + output format for reviews
+│   └── add-slide/
+│       └── SKILL.md     — slide template + naming/ordering conventions
 └── hooks/
-    └── pre-commit       — git hook: prettier + rubocop + jekyll build
+    ├── pre-commit       — git hook: prettier + rubocop + jekyll build
+    └── pre-push         — git hook: full build + htmlproofer link check
 ```
+
+CI lives outside this folder: `.github/workflows/ci.yml` runs the same
+build + htmlproofer checks on every push and pull request to `main`.
 
 ## How it integrates
 
@@ -47,6 +54,14 @@ repository. Below is what each piece does and how they wire together.
 6. **`hooks/pre-commit`** runs on every `git commit` (once `core.hooksPath`
    is wired). Checks staged files with prettier/rubocop and runs a Jekyll
    smoke-build if config/layouts/posts changed.
+
+7. **`hooks/pre-push`** runs on every `git push`: full `jekyll build` plus
+   an htmlproofer link check, mirroring what CI runs — catch it locally
+   before the workflow fails.
+
+8. **`.github/workflows/ci.yml`** repeats the same checks on GitHub for
+   every push/PR to `main`, so nothing merges broken even if local hooks
+   were bypassed with `--no-verify`.
 
 ## Manual setup (if SessionStart hook didn't fire)
 
