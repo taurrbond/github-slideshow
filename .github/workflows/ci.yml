@@ -22,4 +22,5 @@ jobs:
         run: bundle exec jekyll build
 
       - name: Check HTML
-        run: bundle exec htmlproofer ./_site --disable-external --allow-missing-href
+        # node_modules ships vendored reveal.js demo/test pages with links we don't control
+        run: bundle exec htmlproofer ./_site --disable-external --allow-missing-href --ignore-files "/node_modules/"
