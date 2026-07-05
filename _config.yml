@@ -101,16 +101,21 @@ reveal:
   minScale: 0.2
   maxScale: 1.5
 
+## Jekyll >= 3.3 excludes node_modules by default; this custom list overrides
+## that so reveal.js assets are copied into _site (test/demo files trimmed).
 exclude: [
   "Gemfile",
   "Gemfile.lock",
   "vendor",
-  "reveal.js/test",
-  "reveal.js/index.html",
-  "reveal.js/README.md",
-  "reveal.js/bower.json",
-  "reveal.js/Gruntfile.js",
-  "reveal.js/CONTRIBUTING.md",
-  "reveal.js/LICENSE",
-  "reveal.js/package.json"
+  "package.json",
+  "package-lock.json",
+  "node_modules/reveal.js/test",
+  "node_modules/reveal.js/demo.html",
+  "node_modules/reveal.js/index.html",
+  "node_modules/reveal.js/README.md",
+  "node_modules/reveal.js/bower.json",
+  "node_modules/reveal.js/gruntfile.js",
+  "node_modules/reveal.js/CONTRIBUTING.md",
+  "node_modules/reveal.js/LICENSE",
+  "node_modules/reveal.js/package.json"
 ]
