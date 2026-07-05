@@ -351,7 +351,7 @@ PLATFORMS
 
 DEPENDENCIES
   github-pages (>= 228)
-  html-proofer (>= 3.13.0)
+  html-proofer (~> 5)
   tzinfo-data
 
 CHECKSUMS
