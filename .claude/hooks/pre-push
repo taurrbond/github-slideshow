@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+# Pre-push hook: full build + link check before anything leaves the machine.
+# Activated via `git config core.hooksPath .claude/hooks` (done by SessionStart hook).
+
+set -euo pipefail
+
+# Some environments have the gem but no binstub on PATH.
+jekyll_run() {
+  if bundle exec jekyll --version &>/dev/null; then
+    bundle exec jekyll "$@"
+  else
+    bundle exec ruby "$(bundle info jekyll --path)/exe/jekyll" "$@"
+  fi
+}
+
+echo "==> Running pre-push checks..."
+
+echo "    jekyll build ..."
+jekyll_run build --quiet
+
+# node_modules ships vendored reveal.js demo/test pages with links we don't control
+PROOFER_ARGS=(./_site --disable-external --allow-missing-href --ignore-files "/node_modules/")
+if bundle exec htmlproofer --version &>/dev/null; then
+  echo "    htmlproofer ..."
+  bundle exec htmlproofer "${PROOFER_ARGS[@]}" 2>&1 | tail -5
+elif bundle info html-proofer --path &>/dev/null; then
+  echo "    htmlproofer (via gem path) ..."
+  bundle exec ruby "$(bundle info html-proofer --path)/exe/htmlproofer" "${PROOFER_ARGS[@]}" 2>&1 | tail -5
+else
+  echo "    htmlproofer not installed — skipping link check."
+fi
+
+echo "==> Pre-push checks passed."

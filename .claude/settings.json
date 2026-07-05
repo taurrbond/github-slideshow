@@ -1,0 +1,73 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(**)",
+      "Edit(**/*.html)",
+      "Edit(**/*.md)",
+      "Edit(**/*.yml)",
+      "Edit(**/*.yaml)",
+      "Edit(**/*.rb)",
+      "Edit(**/*.js)",
+      "Edit(**/*.css)",
+      "Edit(**/*.scss)",
+      "Edit(**/*.liquid)",
+      "Bash(bundle exec jekyll build)",
+      "Bash(bundle exec jekyll serve*)",
+      "Bash(bundle exec htmlproofer*)",
+      "Bash(bundle exec rspec*)",
+      "Bash(bundle exec rubocop*)",
+      "Bash(bundle install*)",
+      "Bash(npm test)",
+      "Bash(npm run lint)",
+      "Bash(npm run format)",
+      "Bash(prettier --write *)",
+      "Bash(git config core.hooksPath*)",
+      "Bash(git status)",
+      "Bash(git diff*)",
+      "Bash(git log*)",
+      "Bash(git add *)",
+      "Bash(git commit*)",
+      "Bash(git push*)",
+      "Bash(git fetch*)",
+      "Bash(git checkout *)",
+      "Bash(git branch*)"
+    ],
+    "deny": [
+      "Bash(curl*)",
+      "Bash(wget*)",
+      "Bash(rm -rf*)",
+      "Bash(rm -r /*)",
+      "Bash(sudo *)",
+      "Bash(chmod 777*)",
+      "Bash(dd *)",
+      "Bash(mkfs*)",
+      "Edit(.env)",
+      "Edit(.env.*)",
+      "Edit(**/.env)",
+      "Edit(**/.env.*)"
+    ]
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "git config core.hooksPath .claude/hooks >/dev/null 2>&1 || true"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "f=\"$(jq -r '.tool_input.file_path // empty' 2>/dev/null)\"; case \"$f\" in *.js|*.css|*.scss|*.html|*.md|*.yml|*.yaml) command -v prettier >/dev/null 2>&1 && prettier --write --log-level warn \"$f\" >/dev/null 2>&1 || true ;; *.rb) command -v rubocop >/dev/null 2>&1 && bundle exec rubocop -A --format quiet \"$f\" >/dev/null 2>&1 || true ;; esac"
+          }
+        ]
+      }
+    ]
+  }
+}
